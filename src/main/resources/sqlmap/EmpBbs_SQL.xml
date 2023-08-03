@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.EmpBbsMapper">
+
+<resultMap type="empBbsVO" id="empBbsMap">
+		<result property="pstId" column="PST_ID" />
+		<result property="frstWrterId" column="FRST_WRTER_ID" />
+		<result property="fsrtWritingTm" column="FSRT_WRITING_TM" />
+		<result property="pstSj" column="PST_SJ" />
+		<result property="pstCn" column="PST_CN" jdbcType="CLOB" javaType="java.lang.String" />
+		<result property="rdcnt" column="RDCNT" />
+		<result property="delYn" column="DEL_YN" />
+		<result property="atchmnflId" column="ATCHMNFL_ID" />
+		<result property="lastUpdusrId" column="LAST_UPDUSR_ID" />
+		<result property="lastUpdtTm" column="LAST_UPDT_TM" />
+	</resultMap>
+
+	<!-- 	직원 게시판의 전체 게시물 리스트 불러오기 -->
+	<select id="selectAll" resultMap="empBbsMap">
+		SELECT
+		PST_ID
+		, FRST_WRTER_ID
+		, FSRT_WRITING_TM
+		, PST_SJ
+		, PST_CN
+		, RDCNT
+		, DEL_YN
+		, ATCHMNFL_ID
+		, LAST_UPDUSR_ID
+		, LAST_UPDT_TM
+		FROM
+		EMP_BBS
+	</select>
+
+	<!-- 게시글 등록하기 -->
+	<insert id="registerPost" parameterType="empBbsVO">
+		INSERT INTO EMP_BBS (
+			PST_ID
+			, FRST_WRTER_ID
+			, FSRT_WRITING_TM
+			, PST_SJ
+			, PST_CN
+			, RDCNT
+			, DEL_YN
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+			, ATCHMNFL_ID
+		) VALUES (
+			(SELECT 'EMP' || LPAD(MAX(SUBSTR(PST_ID, 4)) + 1, 6, '0') FROM emp_bbs)
+			, #{frstWrterId}
+			, TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			, #{pstSj}
+			, #{pstCn}
+			, 0
+			, 'N'
+			, #{lastUpdusrId}
+			, TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			, #{atchmnflId}
+		)
+	</insert>
+
+	<!-- 첨부파일 이미지 처리하기 -->
+	<insert id="registerAtch" parameterType="AtchmnflVO">
+		<selectKey resultType="String" order="BEFORE" keyProperty="atchmnflId">
+			SELECT 'ATT' || LPAD(MAX(SUBSTR(ATCHMNFL_ID, 4)) + 1, 6,
+			'0') FROM ATCHMNFL
+		</selectKey>
+
+		INSERT INTO ATCHMNFL(
+			ATCHMNFL_ID
+			, FRST_WRTER_ID
+			, FRST_WRTER_TM
+			, DEL_YN
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+		) VALUES (
+			#{atchmnflId}
+			, #{frstWrterId}
+			, TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			, 'N'
+			, #{lastUpdusrId}
+			, TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+		)
+	</insert>
+
+	<!-- 첨부파일 이미지 처리하기 -->
+	<insert id="registerAtchDetail" parameterType="AtchmnflVO">
+		INSERT INTO
+			ATCHMNFL_DETAIL (
+			ATCHMNFL_NO
+			, ATCHMNFL_ID
+			, FRST_WRTER_TM
+			, FRST_WRTER_ID
+			, FLPTH
+			, STRE_FL_NM
+			, ATCHMNFL_SIZE
+			, ATCHMNFL_TY
+			, ORGINL_ATCHMNFL_NM
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+			, DEL_YN
+		) VALUES (
+			(SELECT NVL(MAX(ATCHMNFL_NO), 0) + 1 FROM ATCHMNFL_DETAIL)
+			, (SELECT MAX(ATCHMNFL_ID) FROM ATCHMNFL)
+			, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, #{frstWrterId}
+			, #{flpth}
+			, #{streFlNm}
+			, #{atchmnflSize}
+			, 'JPG'
+			, #{orginlAtchmnflNm}
+			, #{lastUpdusrId}
+			, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, 'N'
+		)
+
+	</insert>
+	<!-- 첨부파일 이미지 처리하기 -->
+	<select id="maxAtchId" resultType="atchmnflVO">
+		SELECT
+			MAX(ATCHMNFL_ID) AS ATCHMNFL_ID
+		FROM
+			ATCHMNFL
+	</select>
+
+	<!-- 게시글 상세보기 -->
+	<resultMap type="empBbsVO" id="empFreeBbsMap">
+		<result property="rnum" column="RNUM" />
+		<result property="pstId" column="PST_ID" />
+		<result property="frstWrterId" column="FRST_WRTER_ID" />
+		<result property="fsrtWritingTm" column="FSRT_WRITING_TM" />
+		<result property="pstSj" column="PST_SJ" />
+		<result property="pstCn" column="PST_CN" jdbcType="CLOB" javaType="java.lang.String" />
+		<result property="rdcnt" column="RDCNT" />
+		<result property="delYn" column="DEL_YN" />
+		<result property="lastUpdusrId" column="LAST_UPDUSR_ID" />
+		<result property="lastUpdtTm" column="LAST_UPDT_TM" />
+		<result property="atchmnflId" column="ATCHMNFL_ID" />
+		<collection property="atchmnflDetailList" resultMap="atchmnflDetailMap"></collection>
+		<collection property="empBbsCmntList" resultMap="empBbsCmntMap"></collection>
+		<collection property="empBbsEmtList" resultMap="empBbsEmtMap"></collection>
+
+	</resultMap>
+
+	<resultMap type="atchmnflDetailVO" id="atchmnflDetailMap">
+		<result property="atchmnflId" column="ATCHMNFL_ID" />
+		<result property="flpth" column="FLPTH" />
+		<result property="streFlNm" column="STRE_FL_NM" />
+	</resultMap>
+
+	<resultMap type="empBbsCmntVO" id="empBbsCmntMap">
+		<result property="cmntNo" column="CMNT_NO" />
+		<result property="pstId" column="PST_ID" />
+		<result property="frstWrterId" column="FRST_WRTER_ID" />
+		<result property="fsrtWritingTm" column="FSRT_WRITING_TM" />
+		<result property="cmntCn" column="CMNT_CN" />
+		<result property="reCmntNo" column="RE_CMNT_NO" />
+		<result property="lastUpdusrId" column="LAST_UPDUSR_ID" />
+		<result property="lastUpdtTm" column="LAST_UPDT_TM" />
+		<result property="delYn" column="DEL_YN" />
+	</resultMap>
+
+	<resultMap type="EmpBbsEmtVO" id="empBbsEmtMap">
+		<result property="emtNo" column="EMT_NO" />
+		<result property="gb" column="GB" />
+		<result property="pstId" column="PST_ID" />
+		<result property="empId" column="EMP_ID" />
+	</resultMap>
+
+	<select id="freeDetail" parameterType="empBbsVO" resultMap="empFreeBbsMap">
+		SELECT *
+		FROM EMP_BBS F
+			LEFT OUTER JOIN EMP_BBS_CMNT C
+					ON F.PST_ID = C.PST_ID
+			LEFT OUTER JOIN ATCHMNFL_DETAIL A
+					ON F.ATCHMNFL_ID=A.ATCHMNFL_ID
+			LEFT OUTER JOIN EMP_BBS_EMT E
+					ON F.PST_ID = E.PST_ID
+
+		WHERE F.PST_ID = #{pstId}
+	</select>
+
+	<!-- 게시글 조회수 +1 -->
+	<update id="plusCnt" parameterType="empBbsVO">
+		UPDATE
+			EMP_BBS
+		SET
+			RDCNT = RDCNT + 1
+		WHERE
+			PST_ID = #{pstId}
+	</update>
+
+</mapper>

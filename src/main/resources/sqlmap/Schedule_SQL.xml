@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mapper.ScheduleMapper">
+	<select id="selectAllSchedule" parameterType="String"
+		resultType="scheduleVO">
+		SELECT
+			SCHE_NO
+			, FRST_WRTER_ID
+			, FSRT_WRITING_TM
+			, SCHDL_SJ
+			, SCHDL_YMD
+			, BGNG_TM
+			, END_TM
+			, SCHDL_CN
+			, RLS_YN
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+			, DEL_YN
+		FROM
+		SCHEDULE
+		WHERE
+		DEL_YN = 'N'
+		AND RLS_YN = 'Y'
+		OR LAST_UPDUSR_ID = #{value}
+	</select>
+	<select id="detailSchedule" parameterType="int" resultType="scheduleVO">
+		SELECT
+			SCHE_NO
+			, FRST_WRTER_ID
+			, FSRT_WRITING_TM
+			, SCHDL_SJ
+			, SCHDL_YMD
+			, BGNG_TM
+			, END_TM
+			, SCHDL_CN
+			, RLS_YN
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+			, DEL_YN
+		FROM
+		SCHEDULE
+		WHERE
+		DEL_YN = 'N'
+		AND SCHE_NO =  #{no}
+	</select>
+
+	<insert id="registSchedule" parameterType="scheduleVO">
+		INSERT INTO SCHEDULE (
+		SCHE_NO
+			, FRST_WRTER_ID
+			, FSRT_WRITING_TM
+			, SCHDL_SJ
+			, SCHDL_YMD
+			, BGNG_TM
+			, END_TM
+			, SCHDL_CN
+			, RLS_YN
+			, LAST_UPDUSR_ID
+			, LAST_UPDT_TM
+			, DEL_YN
+		) VALUES (
+			(SELECT NVL((MAX(SCHE_NO)+1),1) FROM SCHEDULE)
+			,#{frstWrterId}
+			,TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			,#{schdlSj}
+			,#{schdlYmd}
+			,#{bgngTm}
+			,#{endTm}
+			,#{schdlCn}
+			,#{rlsYn}
+			,#{frstWrterId}
+			,TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			,'N'
+		)
+	</insert>
+
+	<update id="updateSchedule" parameterType="scheduleVO" >
+		UPDATE SCHEDULE
+		SET
+			SCHDL_YMD = #{schdlYmd}
+			, BGNG_TM = #{bgngTm}
+			, END_TM = #{endTm}
+			, SCHDL_CN = #{schdlCn}
+			, RLS_YN = #{rlsYn}
+			, LAST_UPDUSR_ID = #{lastUpdusrId}
+			, LAST_UPDT_TM = TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+		WHERE
+			SCHE_NO = #{scheNo}
+	</update>
+	<update id="deleteSchedule" parameterType="scheduleVO" >
+		UPDATE SCHEDULE
+		SET
+			, LAST_UPDUSR_ID = #{lastUpdusrId}
+			, LAST_UPDT_TM = TO_CHAR(SYSDATE, 'yyyymmddhh24miss')
+			, DEL_YN = 'Y'
+		WHERE
+			SCHE_NO = #{scheNo}
+	</update>
+</mapper>
